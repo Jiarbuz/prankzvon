@@ -1,13 +1,27 @@
 from flask import Flask, render_template, request, session
+from flask_babel import Babel
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = '20223b185377e4778f8366afc34f9af0e0f0a88bd7217b52d7f1fbe4460fb554'  # Change this for production
+app.secret_key = os.getenv('20223b185377e4778f8366afc34f9af0e0f0a88bd7217b52d7f1fbe4460fb554', 'default-secret-key')
 
-# Translation dictionaries
+app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
+babel = Babel(app)
+
+def get_locale():
+    return session.get('lang') or request.accept_languages.best_match(['ru', 'en'])
+
+babel.locale_selector_func = get_locale
+
+
+# Словари переводов
 translations = {
     'ru': {
         'info_title': "PrankVzlom 📹📔",
-        'disclaimer': "САЙТ СДЕЛАН ДЛЯ РАЗВЛЕКАТЕЛЬНЫХ ЦЕЛЯХ И МЫ НИКОГО НЕ ХОЧЕМ ОСКОРБИТЬ ИЛИ УНИЗИТЬ",
+        'disclaimer': "САЙТ СДЕЛАН ДЛЯ РАЗВЛЕКАТЕЛЬНЫХ ЦЕЛЯХ...",
         'software': "Софты",
         'admins': "СПИСОК АДМИНОВ",
         'partners': "Партнёры",
@@ -19,11 +33,11 @@ translations = {
         'copyright': "© 2025 PrankVzlom. Все права защищены.",
         'accept': "Принять",
         'modal_title': "ВНИМАНИЕ",
-        'modal_content': "Этот сайт создан исключительно в развлекательных целях. Мы не хотим никого оскорбить или унизить. Продолжая, вы подтверждаете, что понимаете это."
+        'modal_content': "Этот сайт создан исключительно в развлекательных целях..."
     },
     'en': {
         'info_title': "PrankVzlom 📹📔",
-        'disclaimer': "THE SITE IS MADE FOR ENTERTAINMENT PURPOSES AND WE DO NOT WANT TO OFFEND OR HUMILIATE ANYONE",
+        'disclaimer': "THE SITE IS MADE FOR ENTERTAINMENT PURPOSES...",
         'software': "Software",
         'admins': "ADMINS LIST",
         'partners': "Partners",
@@ -35,23 +49,17 @@ translations = {
         'copyright': "© 2025 PrankVzlom. All rights reserved.",
         'accept': "Accept",
         'modal_title': "WARNING",
-        'modal_content': "This site is made for entertainment purposes only. We don't want to offend or humiliate anyone. By continuing, you acknowledge that you understand this."
+        'modal_content': "This site is made for entertainment purposes only..."
     }
 }
 
 @app.route('/')
 def index():
-    # Set default language to Russian if not set
-    if 'lang' not in session:
-        session['lang'] = 'ru'
-    
-    current_lang = session['lang']
-    
-    # Main data structure for the site content
+    lang = session.get('lang', 'ru')
     site_data = {
         "info": {
-            "title": translations[current_lang]['info_title'],
-            "description": translations[current_lang]['disclaimer'],
+            "title": translations[lang]['info_title'],
+            "description": translations[lang]['disclaimer'],
             "links": [
                 {"name": "ОФИЦИАЛЬНЫЙ КАНАЛ", "url": "https://t.me/+_dzIExBP_yViZDk9"},
                 {"name": "ПЕРЕХОДНИК", "url": "https://t.me/prankzvon"},
@@ -59,7 +67,7 @@ def index():
                 {"name": "ТУТОР ПО КАМЕРАМ", "url": "https://t.me/+1ZZKZBWjTHxjMDQ8"},
                 {"name": "КАНАЛ С АУДИО", "url": "https://t.me/+Y77I8AtvLNM0OGUy"},
                 {"name": "БОТ", "url": "https://t.me/prankvzlomnewbot"},
-                {"name": "ТИК ТОК", "url": "https://www.tiktok.com/@jiarbuz?_t=ZS-8x4umoIqKYx&_r=1"},
+                {"name": "ТИК ТОК", "url": "https://www.tiktok.com/@jiarbuz"},
                 {"name": "ПОДДЕРЖКА PRANKVZLOM", "url": "https://t.me/PrankVzlomUnban"}
             ]
         },
@@ -71,25 +79,25 @@ def index():
             {"name": "SoundPad", "url": "https://mega.nz/file/Ck4jhZBL#bXmvrKCquhJrt2hMlHiV2QfpzMm3uj_lLjv9yFLEjgA"}
         ],
         "admins": {
-            translations[current_lang]['main_admin']: [{"name": "Православный Бес", "url": "https://t.me/bes689"}],
-            translations[current_lang]['creators']: [
+            translations[lang]['main_admin']: [{"name": "Православный Бес", "url": "https://t.me/bes689"}],
+            translations[lang]['creators']: [
                 {"name": "Everyday", "url": "https://t.me/mobile_everyday"},
                 {"name": "Андрей", "url": "https://t.me/prankzvon231"},
                 {"name": "Lucper", "url": "https://t.me/lucper1"}
             ],
-            translations[current_lang]['senior_admins']: [
+            translations[lang]['senior_admins']: [
                 {"name": "Диванный воин Кчау", "url": "https://t.me/bestanov"},
                 {"name": "JIARBUZ.exe", "url": "https://t.me/jiarbuz"},
                 {"name": "ximi13p", "url": "https://t.me/ximi13p"},
                 {"name": "Цыфра", "url": "https://t.me/himera_unturned"}
             ],
-            translations[current_lang]['junior_admins']: [
+            translations[lang]['junior_admins']: [
                 {"name": "k3stovski", "url": "https://t.me/k3stovski"},
                 {"name": "Наполеонский пистолэтPRNKZV", "url": "https://t.me/prnkzvn"},
                 {"name": "жук", "url": "https://t.me/werwse"},
                 {"name": "kronaфacia", "url": "https://t.me/kronaphasia"}
             ],
-            translations[current_lang]['senior_mods']: [
+            translations[lang]['senior_mods']: [
                 {"name": "aiocryp", "url": "https://t.me/aiocryp"},
                 {"name": "саня шпалин", "url": "https://t.me/sanya_shpalka"}
             ]
@@ -97,15 +105,16 @@ def index():
         "partners": [
             {"name": "Совиный патруль", "url": "https://t.me/+x90aZWxcI8ljZmQy"}
         ],
-        "translations": translations[current_lang]
+        "translations": translations[lang]
     }
-    return render_template('index.html', data=site_data, current_lang=current_lang)
+    return render_template('index.html', data=site_data, current_lang=lang)
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
     if lang in ['ru', 'en']:
         session['lang'] = lang
-    return '', 204  # No content response
+    return '', 204  # No content
 
 if __name__ == '__main__':
     app.run(debug=True)
+
