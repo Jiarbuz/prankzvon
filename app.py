@@ -21,7 +21,7 @@ babel.locale_selector_func = get_locale
 translations = {
     'ru': {
         'info_title': "PrankVzlom 📹📔",
-        'disclaimer': "САЙТ СДЕЛАН ДЛЯ РАЗВЛЕКАТЕЛЬНЫХ ЦЕЛЯХ...",
+        'disclaimer': "САЙТ СДЕЛАН ДЛЯ РАЗВЛЕКАТЕЛЬНЫХ ЦЕЛЯХ И МЫ НИКОГО НЕ ХОТИМ ОСКОРБИТЬ ИЛИ УНИЗИТЬ",
         'software': "Софты",
         'admins': "СПИСОК АДМИНОВ",
         'partners': "Партнёры",
