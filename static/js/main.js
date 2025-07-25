@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             content.style.display = 'none';
         });
 
-        // Показ новой вкладки
+        // Показ новых вкладки
         nextContent.style.display = 'block';
         nextContent.classList.add(`enter-from-${direction}`);
         nextContent.offsetWidth; // Force reflow
