@@ -43,7 +43,7 @@ translations = {
             'tiktok': "ТИК ТОК",
             'support': "ПОДДЕРЖКА"
         },
-        'partner_owl': "Совиный патруль"
+        'partner_owl': "Скоро..."
     },
     'en': {
         'info_title': "PrankVzlom 📹📔",
@@ -70,7 +70,7 @@ translations = {
             'tiktok': "TIKTOK",
             'support': "SUPPORT"
         },
-        'partner_owl': "Owl Patrol"
+        'partner_owl': "Soon..."
     }
 }
 
@@ -194,8 +194,8 @@ def index():
         "partners": [
             {
                 "name": t['partner_owl'],
-                "url": "https://t.me/+x90aZWxcI8ljZmQy",
-                "avatar": "https://ltdfoto.ru/images/2025/07/25/photo_2025-06-30_23-03-01.jpg"
+                "url": "https://youtu.be/dQw4w9WgXcQ",
+                "avatar": "https://cdn-icons-png.flaticon.com/512/8890/8890972.png"
             }
         ],
         "translations": t

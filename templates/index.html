@@ -46,27 +46,28 @@
         </div>
     </div>
 
-    <div class="container">
-        <!-- Header -->
-        <header class="animate__animated animate__fadeInDown">
-            <div class="logo">
-                <i class="fas fa-video"></i>
-                <h1>PrankVzlom</h1>
+<div class="container">
+    <!-- Header -->
+    <header class="animate__animated animate__fadeInDown">
+        <div class="logo">
+            <i class="fas fa-video"></i>
+            <h1>PrankVzlom</h1>
+        </div>
+        <div class="header-controls">
+            <div class="language-switcher">
+                <button class="lang-btn {% if current_lang == 'ru' %}active{% endif %}" data-lang="ru">
+                    🇷🇺 RU
+                </button>
+                <button class="lang-btn {% if current_lang == 'en' %}active{% endif %}" data-lang="en">
+                    🇺🇸 EN
+                </button>
             </div>
-            <div class="header-controls">
-                <div class="language-switcher">
-                    <button class="lang-btn {% if current_lang == 'ru' %}active{% endif %}" data-lang="ru">
-                        <i class="fas fa-language"></i> RU
-                    </button>
-                    <button class="lang-btn {% if current_lang == 'en' %}active{% endif %}" data-lang="en">
-                        <i class="fas fa-language"></i> EN
-                    </button>
-                </div>
-                <div class="theme-toggle">
-                    <i class="fas fa-moon"></i>
-                </div>
+            <div class="theme-toggle">
+                <i class="fas fa-moon"></i>
             </div>
-        </header>
+        </div>
+    </header>
+
 
         <!-- Tab Navigation -->
         <nav class="tabs animate__animated animate__fadeIn animate__delay-1s">
