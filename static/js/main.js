@@ -20,18 +20,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons and contents
+   let currentTabIndex = 0;
+
+    tabButtons.forEach((button, index) => {
+        button.addEventListener('click', function () {
+            if (index === currentTabIndex) return;
+
+            const direction = index > currentTabIndex ? 'right' : 'left';
+            const currentContent = tabContents[currentTabIndex];
+            const nextContent = tabContents[index];
+
+            // Удалить все анимации и скрыть вкладки
+            tabContents.forEach(content => {
+                content.classList.remove('slide-in-left', 'slide-in-right', 'slide-out-left', 'slide-out-right', 'active');
+                content.style.display = 'none';
+            });
+
+            // Анимация исчезновения
+            currentContent.classList.add(direction === 'right' ? 'slide-out-left' : 'slide-out-right');
+            currentContent.style.display = 'block';
+
+            // Анимация появления
+            nextContent.classList.add(direction === 'right' ? 'slide-in-right' : 'slide-in-left', 'active');
+            nextContent.style.display = 'block';
+
+            // Обновить активную кнопку
             tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked button and corresponding content
             this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
+
+            // Сохраняем индекс
+            currentTabIndex = index;
         });
     });
+
+    // Показываем первую вкладку при загрузке
+    tabContents[0].classList.add('active');
+    tabContents[0].style.display = 'block';
     
     // Language switcher functionality
     const langButtons = document.querySelectorAll('.lang-btn');
