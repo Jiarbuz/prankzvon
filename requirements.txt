@@ -43,7 +43,6 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 python-nmap==0.7.1
 pytz==2025.2
-pywin32==310
 requests==2.31.0
 ROPGadget==7.6
 rpyc==6.0.2
