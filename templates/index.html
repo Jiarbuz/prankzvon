@@ -1,20 +1,29 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrankVzlom</title>
+    <title>PrankVzlom - {{ data.translations.info_title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Animate.css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <!-- Minecraft Font -->
     <style>
         @font-face {
             font-family: 'Minecraft';
             src: url("{{ url_for('static', filename='fonts/minecraft.ttf') }}") format('truetype');
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("{{ url_for('static', filename='images/space-bg.jpg') }}") no-repeat center center;
+            background-size: cover;
+            opacity: 0.15;
+            z-index: -1;
         }
     </style>
 </head>
@@ -95,13 +104,13 @@
                     <div class="links-grid">
                         {% for link in data.info.links %}
                         <a href="{{ link.url }}" target="_blank" class="link-item">
-                            {% if "КАНАЛ" in link.name %}
+                            {% if "КАНАЛ" in link.name or "CHANNEL" in link.name %}
                                 <i class="fas fa-broadcast-tower"></i>
-                            {% elif "ЧАТ" in link.name %}
+                            {% elif "ЧАТ" in link.name or "CHAT" in link.name %}
                                 <i class="fas fa-comments"></i>
-                            {% elif "БОТ" in link.name %}
+                            {% elif "БОТ" in link.name or "BOT" in link.name %}
                                 <i class="fas fa-robot"></i>
-                            {% elif "ТИК ТОК" in link.name %}
+                            {% elif "ТИК ТОК" in link.name or "TIKTOK" in link.name %}
                                 <i class="fab fa-tiktok"></i>
                             {% else %}
                                 <i class="fas fa-link"></i>
@@ -143,7 +152,16 @@
                         <div class="admin-grid">
                             {% for admin in admins %}
                             <a href="{{ admin.url }}" target="_blank" class="admin-item">
-                                <i class="fas fa-user-ninja"></i> {{ admin.name }}
+                                <div class="admin-avatar-container">
+                                    {% if admin.avatar %}
+                                    <img src="{{ admin.avatar }}" alt="{{ admin.name }}" class="admin-avatar">
+                                    {% else %}
+                                    <div class="admin-avatar-placeholder">
+                                        <i class="fas fa-user-secret"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <span class="admin-name">{{ admin.name }}</span>
                             </a>
                             {% endfor %}
                         </div>
@@ -162,7 +180,16 @@
                     <div class="partners-grid">
                         {% for partner in data.partners %}
                         <a href="{{ partner.url }}" target="_blank" class="partner-item">
-                            <i class="fas fa-owl"></i> {{ partner.name }}
+                            <div class="partner-avatar-container">
+                                {% if partner.avatar %}
+                                <img src="{{ partner.avatar }}" alt="{{ partner.name }}" class="partner-avatar">
+                                {% else %}
+                                <div class="partner-avatar-placeholder">
+                                    <i class="fas fa-owl"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <span class="partner-name">{{ partner.name }}</span>
                         </a>
                         {% endfor %}
                     </div>
