@@ -3,20 +3,24 @@ from flask_babel import Babel
 from dotenv import load_dotenv
 import os
 
+# Загрузка переменных окружения
 load_dotenv()
 
+# Инициализация Flask приложения
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'default-secret-key')
+app.secret_key = os.getenv('1bcb3078b20ca1ad5f223f4fb9a2ca34a2aaeec55971bd69f8d539dc1c6a99e3', 'default-secret-key')
 
+# Настройка Babel для интернационализации
 app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
 babel = Babel(app)
 
 def get_locale():
+    """Определение языка из сессии или использование языка по умолчанию"""
     return session.get('lang', 'ru')
 
 babel.locale_selector_func = get_locale
 
-# Complete translations
+# Полные переводы для приложения
 translations = {
     'ru': {
         'info_title': "PrankVzlom 📹📔",
@@ -74,6 +78,7 @@ translations = {
     }
 }
 
+# Главная страница
 @app.route('/')
 def index():
     lang = session.get('lang', 'ru')
@@ -202,11 +207,45 @@ def index():
     }
     return render_template('index.html', data=site_data, current_lang=lang)
 
+# Установка языка
 @app.route('/set_language/<lang>')
 def set_language(lang):
     if lang in ['ru', 'en']:
         session['lang'] = lang
     return '', 204
 
+# Обработчик 404 ошибки
+@app.errorhandler(404)
+def page_not_found(e):
+    lang = session.get('lang', 'ru')
+    t = translations[lang]
+    
+    if lang == 'ru':
+        error_texts = {
+            "title": "Упс!",
+            "error_title": "404 - Страница потерялась",
+            "error_message": "Похоже, эта страница решила взять выходной или переехала без предупреждения.",
+            "fun_text": "Может быть, она ушла в запой с другими страницами?",
+            "go_home": "Вернуться на главную"
+        }
+    else:
+        error_texts = {
+            "title": "Oops!",
+            "error_title": "404 - Page Gone Missing",
+            "error_message": "Looks like this page decided to take a vacation or moved without notice.",
+            "fun_text": "Maybe it went partying with other pages?",
+            "go_home": "Go to Homepage"
+        }
+    
+    error_data = {
+        "translations": {
+            "title": t['info_title'],
+            "error_texts": error_texts,
+            "copyright": t['copyright']
+        }
+    }
+    return render_template('404.html', data=error_data), 404
+
+# Запуск приложения
 if __name__ == '__main__':
     app.run(debug=True)
