@@ -1,14 +1,25 @@
 from flask import Flask, render_template, request, session
 from flask_babel import Babel
 from dotenv import load_dotenv
+from flask import Flask, request, render_template
+from user_agents import parse
+from flask import request
+import datetime
 import os
+import threading
+import requests
+from flask import g
+
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # Загрузка переменных окружения
 load_dotenv()
 
 # Инициализация Flask приложения
 app = Flask(__name__)
-app.secret_key = os.getenv('1bcb3078b20ca1ad5f223f4fb9a2ca34a2aaeec55971bd69f8d539dc1c6a99e3', 'default-secret-key')
+app.secret_key = '1bcb3078b20ca1ad5f223f4fb9a2ca34a2aaeec55971bd69f8d539dc1c6a99e3'
 
 # Настройка Babel для интернационализации
 app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
@@ -214,6 +225,57 @@ def set_language(lang):
         session['lang'] = lang
     return '', 204
 
+# Айпишники
+
+@app.before_request
+def log_visitor_info():
+    if 'logged_ips' not in session:
+        session['logged_ips'] = []
+
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ',' in ip:
+        ip = ip.split(',')[0].strip()
+
+    if ip in session['logged_ips']:
+        return  # Уже логировали этот IP в текущей сессии
+
+    session['logged_ips'].append(ip)
+    session.modified = True  # Обязательно, чтобы Flask сохранил сессию
+
+    user_agent_str = request.headers.get('User-Agent', 'неизвестно')
+    user_agent = parse(user_agent_str)
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        response = requests.get(f"https://ipinfo.io/{ip}/json", timeout=3)
+        data = response.json()
+        country = data.get("country", "неизвестно")
+        city = data.get("city", "неизвестно")
+        org = data.get("org", "неизвестно")
+    except Exception:
+        country = city = org = "ошибка"
+
+    device_type = "Мобильный" if user_agent.is_mobile else "ПК"
+    os = user_agent.os.family
+    browser = user_agent.browser.family
+
+    message = (
+        f"🌐 <b>IP:</b> {ip}\n"
+        f"📍 <b>Страна:</b> {country}, <b>Город:</b> {city}\n"
+        f"🏢 <b>Провайдер:</b> {org}\n"
+        f"📱 <b>Устройство:</b> {device_type}, <b>ОС:</b> {os}, <b>Браузер:</b> {browser}\n"
+        f"⏰ <b>Время:</b> {now}"
+    )
+    send_telegram_log(message)
+
+    print("="*60)
+    print(f"[{now}] 🌐 IP: {ip}")
+    print(f"📍 Страна: {country}, Город: {city}")
+    print(f"🏢 Провайдер: {org}")
+    print(f"📱 Устройство: {device_type}, ОС: {os}, Браузер: {browser}")
+    print("="*60)
+
+
 # Обработчик 404 ошибки
 @app.errorhandler(404)
 def page_not_found(e):
@@ -245,6 +307,24 @@ def page_not_found(e):
         }
     }
     return render_template('404.html', data=error_data), 404
+
+# Тг бот
+
+def send_telegram_log(message):
+    def send():
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        try:
+            requests.post(url, data=payload)
+        except Exception as e:
+            print(f"Ошибка отправки в Telegram: {e}")
+
+    thread = threading.Thread(target=send)
+    thread.start()
 
 # Запуск приложения
 if __name__ == '__main__':
