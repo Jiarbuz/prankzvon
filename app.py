@@ -15,6 +15,22 @@ load_dotenv()
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
+# Отправка соо
+def send_telegram_message(text):
+    if not bot_token or not chat_id:
+        print("Нет токена или chat_id для Telegram")
+        return
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    data = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML"
+    }
+    try:
+        requests.post(url, data=data)
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения в Telegram: {e}")
+
 # Инициализация Flask приложения
 app = Flask(__name__)
 app.secret_key = '1bcb3078b20ca1ad5f223f4fb9a2ca34a2aaeec55971bd69f8d539dc1c6a99e3'
@@ -228,9 +244,7 @@ def log_visitor_info():
     if 'logged_ips' not in session:
         session['logged_ips'] = []
 
-    ip = request.remote_addr  # Берём IP напрямую
-
-    # Если уже логировали этот IP — выходим
+    ip = request.remote_addr
     if ip in session['logged_ips']:
         return
 
@@ -253,23 +267,22 @@ def log_visitor_info():
         f"📍 Страница: {request.path}"
     )
 
-    # Печать токена и чата (для отладки можно удалить позже)
-    print(f"BOT TOKEN: {TELEGRAM_BOT_TOKEN}")
-    print(f"CHAT ID: {TELEGRAM_CHAT_ID}")
+    threading.Thread(target=send_telegram_message, args=(message,)).start()
 
-    # Отправка в Telegram в отдельном потоке
-    threading.Thread(target=send_message, args=(message,)).start()
+    # Печать токена и чата (для отладки можно удалить позже)
+    print(f"BOT TOKEN: {bot_token}")
+    print(f"CHAT ID: {chat_id}")
 
 
 # Универсальная функция отправки сообщений в Telegram
 def send_message(text: str) -> bool:
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+    if not bot_token or not chat_id:
         print("Telegram bot token or chat id not set.")
         return False
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     data = {
-        "chat_id": TELEGRAM_CHAT_ID,
+        "chat_id": chat_id,
         "text": text,
         "parse_mode": "HTML"
     }
@@ -277,12 +290,11 @@ def send_message(text: str) -> bool:
     try:
         response = requests.post(url, json=data, timeout=5)
         print(f"Telegram send response: {response.status_code} - {response.text}")
-        response.raise_for_status()  # Если не 2xx — вызовет ошибку
+        response.raise_for_status()
         return True
     except Exception as e:
         print(f"Error sending Telegram message: {e}")
         return False
-
 
 if __name__ == '__main__':
     app.run(debug=True)
