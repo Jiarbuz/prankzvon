@@ -63,4 +63,6 @@ zope.interface==7.2
 zstandard==0.23.0
 user-agents==2.2.0
 python-telegram-bot==20.8
+flask-limiter>=3.0
+redis>=4.0
 

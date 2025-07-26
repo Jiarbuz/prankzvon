@@ -2,23 +2,45 @@ import os
 import datetime
 import threading
 import requests
-from flask import Flask, request, session
-from flask_babel import Babel
+import ipaddress
+from flask import Flask, render_template, request, session, redirect, url_for
 from user_agents import parse
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask_babel import Babel
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-# Загрузка переменных окружения из .env
+# Загрузка переменных окружения
 load_dotenv()
 
-# Получаем токен и chat_id из окружения
+# Инициализация Flask
+app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'super-secret-key')
+
+# Настройка защиты от DDoS
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"  # Для продакшена используйте Redis: "redis://localhost:6379"
+)
+
+# Настройка Babel
+app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
+babel = Babel(app)
+
+def get_locale():
+    return session.get('lang', 'ru')
+
+babel.init_app(app, locale_selector=get_locale)
+
+# Конфигурация Telegram
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
-# Отправка соо
 def send_telegram_message(text):
     if not bot_token or not chat_id:
-        print("Нет токена или chat_id для Telegram")
+        print("Telegram credentials not configured")
         return
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     data = {
@@ -29,22 +51,9 @@ def send_telegram_message(text):
     try:
         requests.post(url, data=data)
     except Exception as e:
-        print(f"Ошибка при отправке сообщения в Telegram: {e}")
+        print(f"Error sending Telegram message: {e}")
 
-# Инициализация Flask приложения
-app = Flask(__name__)
-app.secret_key = '1bcb3078b20ca1ad5f223f4fb9a2ca34a2aaeec55971bd69f8d539dc1c6a99e3'
-
-# Настройка Babel для интернационализации
-app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
-babel = Babel(app)
-
-def get_locale():
-    return session.get('lang', 'ru')
-
-babel.locale_selector_func = get_locale
-
-# Полные переводы для приложения
+# Переводы для приложения
 translations = {
     'ru': {
         'info_title': "PrankVzlom 📹📔",
@@ -104,6 +113,7 @@ translations = {
 
 # Главная страница
 @app.route('/')
+@limiter.limit("10 per minute")
 def index():
     lang = session.get('lang', 'ru')
     t = translations[lang]
@@ -233,70 +243,38 @@ def index():
 
 # Установка языка
 @app.route('/set_language/<lang>')
+@limiter.limit("5 per minute")
 def set_language(lang):
     if lang in ['ru', 'en']:
         session['lang'] = lang
     return redirect(request.referrer or url_for('index'))
 
-# Логирование IP и информации о посетителе
+# Логирование посетителей
 @app.before_request
+@limiter.limit("20 per minute")
 def log_visitor_info():
-    if 'logged_ips' not in session:
-        session['logged_ips'] = []
-
-    # Получаем реальный IP через заголовок прокси
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
-
-    if ip in session['logged_ips']:
+    if request.path.startswith('/static/'):
         return
 
-    session['logged_ips'].append(ip)
-    session.modified = True
-
-    ua = parse(request.headers.get('User-Agent', 'Неизвестно'))
-    browser = f"{ua.browser.family} {ua.browser.version_string}"
-    os_name = f"{ua.os.family} {ua.os.version_string}"
-    device = f"{ua.device.family}"
+    ip = request.remote_addr
+    ua = parse(request.headers.get('User-Agent', 'Unknown'))
     now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     message = (
-        f"📡 <b>Новый посетитель</b>\n"
+        f"🌐 Новый посетитель\n"
         f"🕒 Время: {now}\n"
-        f"🌐 IP: <code>{ip}</code>\n"
-        f"🌍 OS: {os_name}\n"
-        f"🌐 Browser: {browser}\n"
-        f"📱 Device: {device}\n"
+        f"📡 IP: {ip}\n"
+        f"🖥 OS: {ua.os.family}\n"
+        f"🌍 Browser: {ua.browser.family}\n"
         f"📍 Страница: {request.path}"
     )
 
     threading.Thread(target=send_telegram_message, args=(message,)).start()
 
-    # Печать токена и чата (для отладки можно удалить позже)
-    print(f"BOT TOKEN: {bot_token}")
-    print(f"CHAT ID: {chat_id}")
-
-
-# Универсальная функция отправки сообщений в Telegram
-def send_message(text: str) -> bool:
-    if not bot_token or not chat_id:
-        print("Telegram bot token or chat id not set.")
-        return False
-
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    data = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML"
-    }
-
-    try:
-        response = requests.post(url, json=data, timeout=5)
-        print(f"Telegram send response: {response.status_code} - {response.text}")
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        print(f"Error sending Telegram message: {e}")
-        return False
+# Обработчик ошибки 429
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return render_template('rate_limit.html'), 429
 
 if __name__ == '__main__':
     app.run(debug=True)

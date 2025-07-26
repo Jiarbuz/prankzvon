@@ -145,3 +145,35 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('.card, footer').forEach(element => {
     observer.observe(element);
 });
+
+window.addEventListener("load", () => {
+    const preloader = document.getElementById("preloader");
+    preloader.classList.add("hidden");
+});
+
+const toggleBtn = document.getElementById("hackerToggle");
+const body = document.body;
+const hackerMusic = document.getElementById("hackerMusic");
+const clickSound = document.getElementById("clickSound");
+const returnSound = document.getElementById("returnSound");
+
+let isHackerMode = false;
+
+toggleBtn.addEventListener("click", () => {
+    isHackerMode = !isHackerMode;
+
+    if (isHackerMode) {
+        body.classList.add("hacker-mode");
+        hackerMusic.volume = 0.4;
+        hackerMusic.play();
+        clickSound.play();
+        toggleBtn.innerHTML = `<i class="fas fa-power-off"></i> ВЫКЛЮЧИТЬ`;
+    } else {
+        body.classList.remove("hacker-mode");
+        hackerMusic.pause();
+        hackerMusic.currentTime = 0;
+        returnSound.play();
+        toggleBtn.innerHTML = `<i class="fas fa-skull-crossbones"></i> ВЗЛОМ РЕЖИМ`;
+    }
+});
+
