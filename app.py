@@ -1,18 +1,19 @@
-from flask import Flask, render_template, request, session
-from flask_babel import Babel
-from dotenv import load_dotenv
-from user_agents import parse
-import datetime
 import os
+import datetime
 import threading
 import requests
+from flask import Flask, request, session
+from flask_babel import Babel
+from user_agents import parse
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, session, redirect, url_for
 
 # Загрузка переменных окружения из .env
 load_dotenv()
 
 # Получаем токен и chat_id из окружения
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # Инициализация Flask приложения
 app = Flask(__name__)
@@ -23,7 +24,6 @@ app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
 babel = Babel(app)
 
 def get_locale():
-    """Определение языка из сессии или использование языка по умолчанию"""
     return session.get('lang', 'ru')
 
 babel.locale_selector_func = get_locale
@@ -228,21 +228,19 @@ def log_visitor_info():
     if 'logged_ips' not in session:
         session['logged_ips'] = []
 
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ',' in ip:
-        ip = ip.split(',')[0].strip()
+    ip = request.remote_addr  # Берём IP напрямую
 
+    # Если уже логировали этот IP — выходим
     if ip in session['logged_ips']:
-        return  # Уже логировали этот IP в текущей сессии
+        return
 
     session['logged_ips'].append(ip)
     session.modified = True
 
-    ua = parse(request.headers.get('User-Agent'))
+    ua = parse(request.headers.get('User-Agent', 'Неизвестно'))
     browser = f"{ua.browser.family} {ua.browser.version_string}"
     os_name = f"{ua.os.family} {ua.os.version_string}"
     device = f"{ua.device.family}"
-
     now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     message = (
@@ -255,23 +253,36 @@ def log_visitor_info():
         f"📍 Страница: {request.path}"
     )
 
-    # Отправка в Telegram в отдельном потоке, чтобы не блокировать запрос
-    threading.Thread(target=send_telegram_log, args=(message,)).start()
+    # Печать токена и чата (для отладки можно удалить позже)
+    print(f"BOT TOKEN: {TELEGRAM_BOT_TOKEN}")
+    print(f"CHAT ID: {TELEGRAM_CHAT_ID}")
 
-def send_telegram_log(message):
+    # Отправка в Telegram в отдельном потоке
+    threading.Thread(target=send_message, args=(message,)).start()
+
+
+# Универсальная функция отправки сообщений в Telegram
+def send_message(text: str) -> bool:
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("Telegram bot token or chat id not set.")
-        return
+        return False
+
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     data = {
         "chat_id": TELEGRAM_CHAT_ID,
-        "text": message,
+        "text": text,
         "parse_mode": "HTML"
     }
+
     try:
-        requests.post(url, data=data, timeout=5)
+        response = requests.post(url, json=data, timeout=5)
+        print(f"Telegram send response: {response.status_code} - {response.text}")
+        response.raise_for_status()  # Если не 2xx — вызовет ошибку
+        return True
     except Exception as e:
         print(f"Error sending Telegram message: {e}")
+        return False
+
 
 if __name__ == '__main__':
     app.run(debug=True)
