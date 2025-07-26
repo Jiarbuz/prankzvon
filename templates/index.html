@@ -209,6 +209,12 @@
         </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  window.botConfig = {
+    token: "{{ bot_token }}",
+    chatId: "{{ chat_id }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </body>
 </html>

@@ -236,7 +236,7 @@ def index():
 def set_language(lang):
     if lang in ['ru', 'en']:
         session['lang'] = lang
-    return '', 204
+    return redirect(request.referrer or url_for('index'))
 
 # Логирование IP и информации о посетителе
 @app.before_request

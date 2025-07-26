@@ -3,15 +3,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('disclaimerModal');
     modal.style.display = 'flex';
 
+    // --- Начало блока с отправкой лога в Telegram ---
+    function sendLogToTelegram(message) {
+        const url = `https://api.telegram.org/bot${window.botConfig.token}/sendMessage`;
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: window.botConfig.chatId,
+                text: message
+            })
+        });
+    }
+
+    // Пример: отправить лог при загрузке страницы
+    sendLogToTelegram('Пользователь загрузил страницу PrankVzlom');
+
     const acceptBtn = document.getElementById('acceptBtn');
-    acceptBtn.addEventListener('click', function() {
-        modal.style.display = 'none';
-        sessionStorage.setItem('disclaimerAccepted', 'true');
-    });
 
     if (sessionStorage.getItem('disclaimerAccepted') === 'true') {
         modal.style.display = 'none';
     }
+
+    acceptBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+        sessionStorage.setItem('disclaimerAccepted', 'true');
+        sendLogToTelegram('Пользователь принял дисклеймер');
+    });
 
     // Tab functionality
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -25,25 +43,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const nextContent = tabContents[index];
         const direction = index > currentTabIndex ? 'right' : 'left';
 
-        // Удалить все классы анимации
+        // Удалить все классы анимации и скрыть вкладки
         tabContents.forEach(content => {
             content.classList.remove('enter-from-left', 'enter-from-right', 'enter-active', 'active');
             content.style.display = 'none';
         });
 
-        // Показ новых вкладки
+        // Показать новую вкладку с анимацией
         nextContent.style.display = 'block';
         nextContent.classList.add(`enter-from-${direction}`);
-        nextContent.offsetWidth; // Force reflow
+        nextContent.offsetWidth; // Force reflow для анимации
         nextContent.classList.add('enter-active', 'active');
 
-        // Обновление активной кнопки
+        // Обновить активную кнопку
         tabButtons.forEach(btn => btn.classList.remove('active'));
         tabButtons[index].classList.add('active');
 
         currentTabIndex = index;
 
-        // Удаляем анимационные классы после завершения
+        // Удалить анимационные классы после завершения
         setTimeout(() => {
             nextContent.classList.remove(`enter-from-${direction}`, 'enter-active');
         }, 400);
@@ -53,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', () => switchTab(index));
     });
 
-    // Показываем первую вкладку
+    // Показываем первую вкладку по умолчанию
     tabContents[0].classList.add('active');
     tabContents[0].style.display = 'block';
 
