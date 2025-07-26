@@ -244,7 +244,9 @@ def log_visitor_info():
     if 'logged_ips' not in session:
         session['logged_ips'] = []
 
-    ip = request.remote_addr
+    # Получаем реальный IP через заголовок прокси
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+
     if ip in session['logged_ips']:
         return
 
