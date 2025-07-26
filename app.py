@@ -12,8 +12,8 @@ from flask import Flask, render_template, request, session, redirect, url_for
 load_dotenv()
 
 # Получаем токен и chat_id из окружения
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
 # Инициализация Flask приложения
 app = Flask(__name__)
